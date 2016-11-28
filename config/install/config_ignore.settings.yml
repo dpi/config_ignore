@@ -1,0 +1,7 @@
+ignored_config_entities: { }
+dependencies:
+  module:
+    - config_ignore
+  enforced:
+    module:
+      - config_ignore

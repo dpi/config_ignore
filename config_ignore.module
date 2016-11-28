@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Hooks implemented by the config_ignore module.
+ */
+
+use Drupal\Core\Config\ConfigImporter;
+
+/**
+ * Implements hook_config_import_steps_alter().
+ */
+function config_ignore_config_import_steps_alter(&$sync_steps, ConfigImporter $config_importer) {
+  array_unshift($sync_steps, ['Drupal\config_ignore\ConfigImporterIgnore', 'preImport']);
+  array_push($sync_steps, ['Drupal\config_ignore\ConfigImporterIgnore', 'postImport']);
+}
