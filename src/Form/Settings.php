@@ -42,7 +42,6 @@ class Settings extends ConfigFormBase {
       '#description' => $this->t('One configuration name per line.<br />Examples: <ul><li>user.settings</li><li>views.settings</li><li>contact.settings</li></ul>'),
       '#default_value' => implode(PHP_EOL, $config_ignore_settings->get('ignored_config_entities')),
       '#size' => 60,
-      '#maxlength' => 128,
     ];
     return parent::buildForm($form, $form_state);
   }
