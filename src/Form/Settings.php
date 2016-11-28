@@ -35,13 +35,12 @@ class Settings extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
 
     $config_ignore_settings = $this->config('config_ignore.settings');
-
     $form['ignored_config_entities'] = [
       '#type' => 'textarea',
       '#rows' => 25,
       '#title' => $this->t('Configuration entity names to ignore'),
       '#description' => $this->t('One configuration name per line.<br />Examples: <ul><li>user.settings</li><li>views.settings</li><li>contact.settings</li></ul>'),
-      '#default_value' => implode('\n', $config_ignore_settings->get('ignored_config_entities')),
+      '#default_value' => implode(PHP_EOL, $config_ignore_settings->get('ignored_config_entities')),
       '#size' => 60,
       '#maxlength' => 128,
     ];
@@ -54,7 +53,9 @@ class Settings extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
     $config_ignore_settings = $this->config('config_ignore.settings');
-    $config_ignore_settings->set('ignored_config_entities', explode('\n', $values['ignored_config_entities']));
+    $config_ignore_settings_array = preg_split("[\n|\r]", $values['ignored_config_entities']);
+    $config_ignore_settings_array = array_filter($config_ignore_settings_array);
+    $config_ignore_settings->set('ignored_config_entities', $config_ignore_settings_array);
     $config_ignore_settings->save();
     parent::submitForm($form, $form_state);
   }
