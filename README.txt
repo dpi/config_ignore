@@ -10,6 +10,13 @@ Not anymore!
 
 This modules is a tool to let you keep the configuration you want, in place.
 
+Lets say that you do would like the `system.site` configuration (which contains that sites name, slogan, email, etc) to
+remain untouched, on your live site, no matter what the configuration, in the export folder says.
+
+Or maybe you are getting tired of having the `devel.settings` changed every time you import configuration?
+
+Then this module is what you are looking for.
+
 REQUIREMENTS
 ------------
 You will need the `config` module, from D8 Core, to be enabled.
