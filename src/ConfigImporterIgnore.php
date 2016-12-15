@@ -28,10 +28,12 @@ class ConfigImporterIgnore {
     $config_ignore_settings = \Drupal::config('config_ignore.settings')->get('ignored_config_entities');
     foreach (['delete', 'create', 'rename', 'update'] as $op) {
       // For now, we only support updates.
-      foreach ($config_importer->getUnprocessedConfiguration($op) as $config) {
-        if (in_array($config, $config_ignore_settings)) {
-          $config_to_ignore[$op][$config] = \Drupal::config($config)
-            ->getRawData();
+      if ($op == 'update') {
+        foreach ($config_importer->getUnprocessedConfiguration($op) as $config) {
+          if (in_array($config, $config_ignore_settings)) {
+            $config_to_ignore[$op][$config] = \Drupal::config($config)
+              ->getRawData();
+          }
         }
       }
       // We do not support core.extension.
