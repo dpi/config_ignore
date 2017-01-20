@@ -11,6 +11,11 @@ use Drupal\Core\Config\ConfigImporter;
  * Implements hook_config_import_steps_alter().
  */
 function config_ignore_config_import_steps_alter(&$sync_steps, ConfigImporter $config_importer) {
+  // Add a "step" to the config import workflow, before any other step is
+  // getting executed.
   array_unshift($sync_steps, ['Drupal\config_ignore\ConfigImporterIgnore', 'preImport']);
+
+  // Add a step that should be the last to run during the config import
+  // workflow.
   array_push($sync_steps, ['Drupal\config_ignore\ConfigImporterIgnore', 'postImport']);
 }
