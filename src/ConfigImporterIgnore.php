@@ -23,7 +23,7 @@ class ConfigImporterIgnore {
    * @param ConfigImporter $config_importer
    *   Config importer object.
    */
-  public static function preImport(&$context, ConfigImporter $config_importer) {
+  public static function preImport(array &$context, ConfigImporter $config_importer) {
     $config_to_ignore = [];
     $config_ignore_settings = \Drupal::config('config_ignore.settings')->get('ignored_config_entities');
     foreach (['delete', 'create', 'rename', 'update'] as $op) {
@@ -31,8 +31,7 @@ class ConfigImporterIgnore {
       if ($op == 'update') {
         foreach ($config_importer->getUnprocessedConfiguration($op) as $config) {
           if (in_array($config, $config_ignore_settings)) {
-            $config_to_ignore[$op][$config] = \Drupal::config($config)
-              ->getRawData();
+            $config_to_ignore[$op][$config] = \Drupal::config($config)->getRawData();
           }
         }
       }
@@ -55,7 +54,7 @@ class ConfigImporterIgnore {
    * @param ConfigImporter $config_importer
    *   Config importer object.
    */
-  public static function postImport(&$context, ConfigImporter $config_importer) {
+  public static function postImport(array &$context, ConfigImporter $config_importer) {
     /** @var SharedTempStore $temp_store */
     $temp_store = \Drupal::service('user.shared_tempstore')->get('config_ignore');
     $config_to_ignore = $temp_store->get('config_to_ignore');
