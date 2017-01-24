@@ -1,7 +1,0 @@
-config_ignore.settings:
-  title: 'Config Ignore Settings'
-  route_name: 'config_ignore.settings'
-  description: 'List all settings to ignore'
-  parent: system.admin_structure
-  weight: 90
-

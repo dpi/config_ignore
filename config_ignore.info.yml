@@ -1,7 +1,7 @@
 name: Config Ignore
 type: module
-description: Ignore certain configuration durin import
+description: Ignore certain configuration during import
 core: 8.x
-package: Other
+package: Configuration
 dependencies:
   - config
