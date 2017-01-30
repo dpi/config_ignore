@@ -2,6 +2,7 @@
 
 namespace Drupal\config_ignore;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\user\SharedTempStore;
 
@@ -30,8 +31,25 @@ class ConfigImporterIgnore {
       // For now, we only support updates.
       if ($op == 'update') {
         foreach ($config_importer->getUnprocessedConfiguration($op) as $config) {
-          if (in_array($config, $config_ignore_settings)) {
-            $config_to_ignore[$op][$config] = \Drupal::config($config)->getRawData();
+          foreach ($config_ignore_settings as $config_ignore_setting) {
+            // Check if the last character in the string is an asterisk.
+            // If so, it means that it is a wildcard.
+            if (Unicode::substr($config_ignore_setting, -1) == '*') {
+              // Remove the asterisk character from the end of the string.
+              $config_ignore_setting = rtrim($config_ignore_setting, '*');
+              // Test if the start of the config, we are checking, are matching
+              // the $config_ignore_setting string. If it is a match, mark
+              // that config name to be ignored.
+              if (Unicode::substr($config, 0, strlen($config_ignore_setting)) == $config_ignore_setting) {
+                $config_to_ignore[$op][$config] = \Drupal::config($config)->getRawData();
+              }
+            }
+            // If string does not contain an asterisk in the end, just compare
+            // the two strings, and if they match, mark that config name to be
+            // ignored.
+            elseif ($config == $config_ignore_setting) {
+              $config_to_ignore[$op][$config] = \Drupal::config($config)->getRawData();
+            }
           }
         }
       }
