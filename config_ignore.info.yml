@@ -3,5 +3,6 @@ type: module
 description: Ignore certain configuration during import
 core: 8.x
 package: Configuration
+configure: config_ignore.settings
 dependencies:
   - config
