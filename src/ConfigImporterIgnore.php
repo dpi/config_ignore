@@ -27,6 +27,7 @@ class ConfigImporterIgnore {
   public static function preImport(array &$context, ConfigImporter $config_importer) {
     $config_to_ignore = [];
     $config_ignore_settings = \Drupal::config('config_ignore.settings')->get('ignored_config_entities');
+    \Drupal::moduleHandler()->invokeAll('config_ignore_settings_alter', [&$config_ignore_settings]);
     foreach (['delete', 'create', 'rename', 'update'] as $op) {
       // For now, we only support updates.
       if ($op == 'update') {
