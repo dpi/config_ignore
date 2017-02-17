@@ -61,6 +61,9 @@ class ConfigIgnoreTest extends WebTestBase {
     // Validate if the title from the imported config was rejected.
     $this->assertText('Test import');
 
+    // Validate that the user gets a message about what has been ignored.
+    $this->assertText('The following config entity was ignored');
+
   }
 
   /**
@@ -92,6 +95,10 @@ class ConfigIgnoreTest extends WebTestBase {
 
     // Validate if the title from the imported config was rejected.
     $this->assertText('Test import');
+
+    // Validate that the user gets a message about what has been ignored.
+    $this->assertText('The following config entity was ignored');
+
   }
 
 }
