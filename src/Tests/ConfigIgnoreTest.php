@@ -2,7 +2,7 @@
 
 namespace Drupal\config_ignore\Tests;
 
-use Drupal\config_ignore\ConfigImporterIgnore;
+use Drupal\config_ignore\Plugin\ConfigFilter\IgnoreFilter;
 use Drupal\simpletest\WebTestBase;
 use Drupal\Core\Serialization\Yaml;
 
@@ -25,7 +25,7 @@ class ConfigIgnoreTest extends WebTestBase {
    * The profile to install as a basis for testing.
    *
    * We need to change it form the standard 'testing' profile as that will not
-   * print the title on the page, which we use for testing.
+   * print the title on the page, which we use for testing.'*'
    *
    * @var string
    */
@@ -79,7 +79,7 @@ class ConfigIgnoreTest extends WebTestBase {
     $this->config('system.site')->set('name', 'Test import')->save();
 
     // Set the system.site:name to be ignored upon config import.
-    $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.*'])->save();
+    $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.' . IgnoreFilter::INCLUDE_SUFFIX])->save();
 
     // Assemble a change that will try and override the current value.
     $config = $this->config('system.site')->set('name', 'Import has changed title');
@@ -118,7 +118,7 @@ class ConfigIgnoreTest extends WebTestBase {
     $this->config('system.site')->set('name', 'Test import')->save();
 
     // Set the system.site:name to be (force-) imported upon config import.
-    $settings = [ConfigImporterIgnore::FORCE_EXCLUSION_PREFIX . 'system.site'];
+    $settings = [IgnoreFilter::FORCE_EXCLUSION_PREFIX . 'system.site'];
     $this->config('config_ignore.settings')->set('ignored_config_entities', $settings)->save();
 
     // Assemble a change that will try and override the current value.
@@ -162,8 +162,8 @@ class ConfigIgnoreTest extends WebTestBase {
     // Set system.* configs to be ignored and system.site:name to be (force-)
     // imported upon config import.
     $settings = [
-      'system.*',
-      ConfigImporterIgnore::FORCE_EXCLUSION_PREFIX . 'system.site',
+      'system.' . IgnoreFilter::INCLUDE_SUFFIX,
+      IgnoreFilter::FORCE_EXCLUSION_PREFIX . 'system.site',
     ];
     $this->config('config_ignore.settings')->set('ignored_config_entities', $settings)->save();
 
