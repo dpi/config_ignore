@@ -13,6 +13,8 @@ use Drupal\user\SharedTempStore;
  */
 class ConfigImporterIgnore {
 
+  const FORCE_EXCLUSION_PREFIX = '~';
+
   /**
    * Gather config that we want to keep.
    *
@@ -115,6 +117,12 @@ class ConfigImporterIgnore {
   public static function matchConfigName($config_name) {
     $config_ignore_settings = \Drupal::config('config_ignore.settings')->get('ignored_config_entities');
     \Drupal::moduleHandler()->invokeAll('config_ignore_settings_alter', [&$config_ignore_settings]);
+
+    // If the string is an excluded config, don't ignore it.
+    if (in_array(static::FORCE_EXCLUSION_PREFIX . $config_name, $config_ignore_settings, TRUE)) {
+      return FALSE;
+    }
+
     foreach ($config_ignore_settings as $config_ignore_setting) {
       // Check if the last character in the string is an asterisk.
       // If so, it means that it is a wildcard.
