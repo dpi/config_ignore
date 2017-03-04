@@ -14,6 +14,7 @@ use Drupal\user\SharedTempStore;
 class ConfigImporterIgnore {
 
   const FORCE_EXCLUSION_PREFIX = '~';
+  const INCLUDE_SUFFIX = '*';
 
   /**
    * Gather config that we want to keep.
@@ -126,9 +127,9 @@ class ConfigImporterIgnore {
     foreach ($config_ignore_settings as $config_ignore_setting) {
       // Check if the last character in the string is an asterisk.
       // If so, it means that it is a wildcard.
-      if (Unicode::substr($config_ignore_setting, -1) == '*') {
+      if (Unicode::substr($config_ignore_setting, -1) == static::INCLUDE_SUFFIX) {
         // Remove the asterisk character from the end of the string.
-        $config_ignore_setting = rtrim($config_ignore_setting, '*');
+        $config_ignore_setting = rtrim($config_ignore_setting, static::INCLUDE_SUFFIX);
         // Test if the start of the config, we are checking, are matching
         // the $config_ignore_setting string. If it is a match, mark
         // that config name to be ignored.

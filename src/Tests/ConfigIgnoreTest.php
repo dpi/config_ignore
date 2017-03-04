@@ -78,7 +78,7 @@ class ConfigIgnoreTest extends WebTestBase {
     $this->config('system.site')->set('name', 'Test import')->save();
 
     // Set the system.site:name to be ignored upon config import.
-    $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.*'])->save();
+    $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.' . ConfigImporterIgnore::INCLUDE_SUFFIX])->save();
 
     // Assemble a change that will try and override the current value.
     $config = $this->config('system.site')->set('name', 'Import has changed title');
@@ -159,7 +159,7 @@ class ConfigIgnoreTest extends WebTestBase {
     // Set system.* configs to be ignored and system.site:name to be (force-)
     // imported upon config import.
     $settings = [
-      'system.*',
+      'system.' . ConfigImporterIgnore::INCLUDE_SUFFIX,
       ConfigImporterIgnore::FORCE_EXCLUSION_PREFIX . 'system.site',
     ];
     $this->config('config_ignore.settings')->set('ignored_config_entities', $settings)->save();
