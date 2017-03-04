@@ -19,6 +19,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInterface {
+  
+  const FORCE_EXCLUSION_PREFIX = '~';
 
   /**
    * The active configuration storage.
@@ -76,6 +78,11 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
     if (Settings::get('config_ignore_deactivate')) {
       // Allow deactivating config_ignore in settings.php. Do not match any name
       // in that case and allow a normal configuration import to happen.
+      return FALSE;
+    }
+
+    // If the string is an excluded config, don't ignore it.
+    if (in_array(static::FORCE_EXCLUSION_PREFIX . $config_name, $this->configuration['ignored'], TRUE)) {
       return FALSE;
     }
 
