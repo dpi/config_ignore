@@ -18,5 +18,7 @@
   },
   "license": "GPL-2.0+",
   "minimum-stability": "dev",
-  "require": { }
+  "require": {
+    "drupal/config_filter": "*"
+  }
 }
