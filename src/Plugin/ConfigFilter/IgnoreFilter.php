@@ -42,7 +42,7 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
    * @param \Drupal\Core\Config\StorageInterface $active
    *   The active configuration store with the configuration on the site.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, StorageInterface $active) {
+  public function __construct(array $configuration, $plugin_id, array $plugin_definition, StorageInterface $active) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->active = $active;
   }
