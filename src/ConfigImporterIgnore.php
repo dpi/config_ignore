@@ -125,22 +125,9 @@ class ConfigImporterIgnore {
     }
 
     foreach ($config_ignore_settings as $config_ignore_setting) {
-      // Check if the last character in the string is an asterisk.
-      // If so, it means that it is a wildcard.
-      if (Unicode::substr($config_ignore_setting, -1) == static::INCLUDE_SUFFIX) {
-        // Remove the asterisk character from the end of the string.
-        $config_ignore_setting = rtrim($config_ignore_setting, static::INCLUDE_SUFFIX);
-        // Test if the start of the config, we are checking, are matching
-        // the $config_ignore_setting string. If it is a match, mark
-        // that config name to be ignored.
-        if (Unicode::substr($config_name, 0, strlen($config_ignore_setting)) == $config_ignore_setting) {
-          return TRUE;
-        }
-      }
-      // If string does not contain an asterisk in the end, just compare
-      // the two strings, and if they match, mark that config name to be
-      // ignored.
-      elseif ($config_name == $config_ignore_setting) {
+      // Test if the config_name is in the ignore list using a shell like
+      // validation function to test the config_ignore_setting pattern.
+      if (fnmatch($config_ignore_setting, $config_name)) {
         return TRUE;
       }
     }

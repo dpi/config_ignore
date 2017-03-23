@@ -77,8 +77,31 @@ class ConfigIgnoreTest extends WebTestBase {
     // Set the site name to a known value that we later will try and overwrite.
     $this->config('system.site')->set('name', 'Test import')->save();
 
-    // Set the system.site:name to be ignored upon config import.
+    // Set the system.site:name to be ignored using system.*.
     $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.' . ConfigImporterIgnore::INCLUDE_SUFFIX])->save();
+
+    // Assemble a change that will try and override the current value.
+    $config = $this->config('system.site')->set('name', 'Import has changed title');
+
+    $edit = [
+      'config_type' => 'system.simple',
+      'config_name' => $config->getName(),
+      'import' => Yaml::encode($config->get()),
+    ];
+
+    // Submit a new single item config, with the changes.
+    $this->drupalPostForm('admin/config/development/configuration/single/import', $edit, t('Import'));
+
+    $this->drupalPostForm(NULL, array(), t('Confirm'));
+
+    // Validate if the title from the imported config was rejected.
+    $this->assertText('Test import');
+
+    // Validate that the user gets a message about what has been ignored.
+    $this->assertText('The following config entity was ignored');
+
+    // Run the same test, but with *.site.
+    $this->config('config_ignore.settings')->set('ignored_config_entities', [ConfigImporterIgnore::INCLUDE_SUFFIX . '.site'])->save();
 
     // Assemble a change that will try and override the current value.
     $config = $this->config('system.site')->set('name', 'Import has changed title');
