@@ -2,7 +2,6 @@
 
 namespace Drupal\config_ignore\Plugin\ConfigFilter;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\config_filter\Plugin\ConfigFilterBase;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;

@@ -22,7 +22,7 @@ class ConfigIgnoreTest extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['config_ignore'];
+  public static $modules = ['config_ignore', 'config', 'config_filter'];
 
   /**
    * Verify that the Sync. table gets update with appropriate ignore actions.
@@ -34,30 +34,37 @@ class ConfigIgnoreTest extends BrowserTestBase {
     $this->config('system.site')->set('name', 'Test import')->save();
     $this->config('system.date')->set('first_day', '0')->save();
     $this->config('config_ignore.settings')->set('ignored_config_entities', ['system.site'])->save();
-    // @TODO: Test this differently, I am not sure this is the best way.
-//    $destination = CONFIG_SYNC_DIRECTORY;
-//    $destination_dir = config_get_config_directory($destination);
-//    /** @var CachedStorage $source_storage */
-//    $source_storage = \Drupal::service('config.storage');
-//    $destination_storage = new FileStorage($destination_dir);
-//    foreach ($source_storage->listAll() as $name) {
-//      $destination_storage->write($name, $source_storage->read($name));
-//    }
 
-    // @TODO: Test the ignored config differently, the table is not altered.
-//    // Login with a user that has permission to sync. config.
-//    $this->drupalLogin($this->drupalCreateUser(['synchronize configuration']));
-//
-//    // Change the site name, which is supposed to look as an ignored change
-//    // in on the sync. page.
-//    $this->config('system.site')->set('name', 'Test import with changed title')->save();
-//    $this->config('system.date')->set('first_day', '1')->save();
-//
-//    // Validate that the sync. table informs the user that the config will be
-//    // ignored.
-//    $this->drupalGet('admin/config/development/configuration');
-//    $this->assertSession()->responseContains('✔');
-//    $this->assertSession()->responseContains('✖');
+    $destination = CONFIG_SYNC_DIRECTORY;
+    $destination_dir = config_get_config_directory($destination);
+    /** @var CachedStorage $source_storage */
+    $source_storage = \Drupal::service('config.storage');
+    $destination_storage = new FileStorage($destination_dir);
+    foreach ($source_storage->listAll() as $name) {
+      $destination_storage->write($name, $source_storage->read($name));
+    }
+
+    // Login with a user that has permission to sync. config.
+    $this->drupalLogin($this->drupalCreateUser(['synchronize configuration']));
+
+    // Change the site name, which is supposed to look as an ignored change
+    // in on the sync. page.
+    $this->config('system.site')->set('name', 'Test import with changed title')->save();
+    $this->config('system.date')->set('first_day', '1')->save();
+
+    // Validate that the sync. table informs the user that the config will be
+    // ignored.
+    $this->drupalGet('admin/config/development/configuration');
+    $this->assertSession()->linkExists('Config Ignore Settings');
+    /** @var \Behat\Mink\Element\NodeElement[] $table_content */
+    $table_content = $this->xpath('//table[@id="edit-ignored"]//td');
+
+    $table_values = [];
+    foreach ($table_content as $item) {
+      $table_values[] = $item->getHtml();
+    }
+
+    $this->assertTrue(in_array('system.site', $table_values));
   }
 
 }
