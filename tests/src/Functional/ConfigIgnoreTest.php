@@ -65,6 +65,7 @@ class ConfigIgnoreTest extends BrowserTestBase {
     }
 
     $this->assertTrue(in_array('system.site', $table_values));
+    $this->assertFalse(in_array('system.date', $table_values));
   }
 
 }
