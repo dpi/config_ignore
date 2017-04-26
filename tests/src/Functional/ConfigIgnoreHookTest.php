@@ -33,6 +33,8 @@ class ConfigIgnoreHookTest extends ConfigIgnoreBrowserTestBase {
 
     $this->doImport();
 
+    // Test if the `config_ignore_hook_test` module got to ignore the site name
+    // config.
     $this->assertEquals('Changed title', $this->config('system.site')->get('name'));
 
   }

@@ -22,25 +22,17 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
   public static $modules = ['config_ignore', 'config', 'config_filter'];
 
   /**
-   * Config Importer object used for testing.
-   *
-   * @var \Drupal\Core\Config\ConfigImporter
+   * Perform a config import from sync. folder.
    */
-  protected $configImporter;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setUp() {
-    parent::setUp();
-
+  public function doImport() {
     // Set up the ConfigImporter object for testing.
     $storage_comparer = new StorageComparer(
       $this->container->get('config.storage.sync'),
       $this->container->get('config.storage'),
       $this->container->get('config.manager')
     );
-    $this->configImporter = new ConfigImporter(
+
+    $config_importer = new ConfigImporter(
       $storage_comparer->createChangelist(),
       $this->container->get('event_dispatcher'),
       $this->container->get('config.manager'),
@@ -51,13 +43,8 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
       $this->container->get('theme_handler'),
       $this->container->get('string_translation')
     );
-  }
 
-  /**
-   * Perform a config import from sync. folder.
-   */
-  public function doImport() {
-    $this->configImporter->reset()->import();
+    $config_importer->reset()->import();
   }
 
   /**
