@@ -48,4 +48,23 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
     $this->assertFalse(in_array('system.date', $table_values));
   }
 
+  /**
+   * Verify that the settings form works.
+   */
+  public function testSettingsForm() {
+    // Login with a user that has permission to import config.
+    $this->drupalLogin($this->drupalCreateUser(['import configuration']));
+
+    $edit = [
+      'ignored_config_entities' => 'config.test',
+    ];
+
+    $this->drupalGet('admin/config/development/configuration/ignore');
+    $this->submitForm($edit, t('Save configuration'));
+
+    $settings = $this->config('config_ignore.settings')->get('ignored_config_entities');
+
+    $this->assertEqual($settings, ['config.test']);
+  }
+
 }
