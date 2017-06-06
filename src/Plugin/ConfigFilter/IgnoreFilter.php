@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @ConfigFilter(
  *   id = "config_ignore",
  *   label = "Config Ignore",
- *   weight = 0
+ *   weight = 100
  * )
  */
 class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInterface {
