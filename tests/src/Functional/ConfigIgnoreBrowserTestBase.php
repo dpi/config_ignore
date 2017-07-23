@@ -62,4 +62,5 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
       $destination_storage->write($name, $source_storage->read($name));
     }
   }
+
 }
