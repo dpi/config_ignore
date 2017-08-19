@@ -68,6 +68,9 @@ Examples: <ul>
     $config_ignore_settings->set('ignored_config_entities', $config_ignore_settings_array);
     $config_ignore_settings->save();
     parent::submitForm($form, $form_state);
+
+    // Clear the config_filter plugin cache.
+    \Drupal::service('plugin.manager.config_filter')->clearCachedDefinitions();
   }
 
 }
