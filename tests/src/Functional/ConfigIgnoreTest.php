@@ -158,4 +158,39 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
 
   }
 
+  /**
+   * Verify ignoring only some config keys.
+   *
+   * This test covers the scenario when not the whole config is to be ignored
+   * but only a certain subset of it.
+   */
+  public function testValidateImportingWithIgnoredSubKeys() {
+
+    // Set the site name to a known value that we later will try and overwrite.
+    $this->config('system.site')
+      ->set('name', 'Test name')
+      ->set('slogan', 'Test slogan')
+      ->set('page.front', '/ignore')
+      ->save();
+
+    // Set the system.site:name to be (force-) imported upon config import.
+    $settings = ['system.site:name', 'system.site:page.front'];
+    $this->config('config_ignore.settings')->set('ignored_config_entities', $settings)->save();
+
+    $this->doExport();
+
+    // Change the site name, perform an import and see if the site name remains
+    // the same, as it should.
+    $this->config('system.site')
+      ->set('name', 'Changed title')
+      ->set('slogan', 'Changed slogan')
+      ->set('page.front', '/new-ignore')
+      ->save();
+
+    $this->doImport();
+    $this->assertEquals('Changed title', $this->config('system.site')->get('name'));
+    $this->assertEquals('Test slogan', $this->config('system.site')->get('slogan'));
+    $this->assertEquals('/new-ignore', $this->config('system.site')->get('page.front'));
+  }
+
 }

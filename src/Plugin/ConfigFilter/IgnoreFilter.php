@@ -2,6 +2,7 @@
 
 namespace Drupal\config_ignore\Plugin\ConfigFilter;
 
+use Drupal\Component\Utility\NestedArray;
 use Drupal\config_filter\Plugin\ConfigFilterBase;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -87,7 +88,9 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
     }
 
     foreach ($this->configuration['ignored'] as $config_ignore_setting) {
-      if (fnmatch($config_ignore_setting, $config_name)) {
+      // Split the ignore settings so that we can ignore individual keys.
+      $ignore = explode(':', $config_ignore_setting);
+      if (fnmatch($ignore[0], $config_name)) {
         return TRUE;
       }
     }
@@ -96,12 +99,88 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
   }
 
   /**
+   * Read from the active configuration.
+   *
+   * This method will read the configuration from the active config store.
+   * But rather than just straight up returning the value it will check if
+   * a nested config key is set to be ignored and set only that value on the
+   * data to be filtered.
+   *
+   * @param string $name
+   *   The name of the configuration to read.
+   * @param mixed $data
+   *   The data to be filtered.
+   *
+   * @return mixed
+   *   The data filtered or read from the active storage.
+   */
+  protected function activeRead($name, $data) {
+    $keys = [];
+    foreach ($this->configuration['ignored'] as $ignored) {
+      // Split the ignore settings so that we can ignore individual keys.
+      $ignored = explode(':', $ignored);
+      if (fnmatch($ignored[0], $name)) {
+        if (count($ignored) == 1) {
+          // If one of the definitions does not have keys ignore the
+          // whole config.
+          return $this->active->read($name);
+        }
+        else {
+          // Add the sub parts to ignore to the keys.
+          $keys[] = $ignored[1];
+        }
+      }
+
+    }
+
+    $active = $this->active->read($name);
+    foreach ($keys as $key) {
+      $parts = explode('.', $key);
+
+      if (count($parts) == 1) {
+        if (isset($active[$key])) {
+          $data[$key] = $active[$key];
+        }
+      }
+      else {
+        $value = NestedArray::getValue($active, $parts, $key_exists);
+        if ($key_exists) {
+          // Enforce the value if it existed in the active config.
+          NestedArray::setValue($data, $parts, $value, TRUE);
+        }
+      }
+    }
+
+    return $data;
+  }
+
+  /**
+   * Read multiple from the active storage.
+   *
+   * @param array $names
+   *   The names of the configuration to read.
+   * @param array $data
+   *   The data to filter.
+   *
+   * @return array
+   *   The new data.
+   */
+  protected function activeReadMultiple(array $names, array $data) {
+    $filtered_data = [];
+    foreach ($names as $name) {
+      $filtered_data[$name] = $this->activeRead($name, $data[$name]);
+    }
+
+    return $filtered_data;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function filterRead($name, $data) {
     // Read from the active storage when the name is in the ignored list.
     if ($this->matchConfigName($name)) {
-      return $this->active->read($name);
+      return $this->activeRead($name, $data);
     }
 
     return $data;
@@ -121,7 +200,7 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
   public function filterReadMultiple(array $names, array $data) {
     // Limit the names which are read from the active storage.
     $names = array_filter($names, [$this, 'matchConfigName']);
-    $active_data = $this->active->readMultiple($names);
+    $active_data = $this->activeReadMultiple($names, $data);
 
     // Return the data with merged in active data.
     return array_merge($data, $active_data);
