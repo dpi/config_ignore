@@ -134,6 +134,9 @@ class IgnoreFilter extends ConfigFilterBase implements ContainerFactoryPluginInt
     }
 
     $active = $this->active->read($name);
+    if (!$active) {
+      return $data;
+    }
     foreach ($keys as $key) {
       $parts = explode('.', $key);
 
