@@ -33,6 +33,8 @@ Go to `admin/config/development/configuration/ignore` to set what configuration 
 Do not ignore the `core.extension` configuration as it will prevent you from enabling new modules with a config import.
 Use the `config_split` module for environment specific modules.
 
+To deactivate `config_ignore`, include `$settings['config_ignore_deactivate'] = TRUE;` in your settings.php file.
+
 MAINTAINERS
 -----------
 Current maintainers:
