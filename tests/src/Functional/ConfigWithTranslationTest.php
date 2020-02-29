@@ -10,7 +10,8 @@ use Drush\TestTraits\DrushTestTrait;
 /**
  * Tests config_ignore with translated configurations.
  *
- * This test is using Drush to perform the export/import operations.
+ * This test is using Drush to perform the export/import operations in order to
+ * test with a real config import/export tool.
  *
  * @group config_ignore
  */
@@ -65,11 +66,11 @@ class ConfigWithTranslationTest extends BrowserTestBase {
     // Change also the translation of user.role.anonymous.
     $this->translateConfig('user.role.anonymous', 'label', 'Vizitator', 'ro');
 
-    // Export changes.
+    // Get config status.
     $this->drush('config:status', [], ['format' => 'json']);
     $diff = (array) $this->getOutputFromJSON();
 
-    // Check that only config_ignore.settings & user.settings are shown.
+    // Check that only config_ignore.settings and user.settings are shown.
     $this->assertCount(2, $diff);
     $this->assertArrayHasKey('config_ignore.settings', $diff);
     $this->assertSame(['name' => 'config_ignore.settings', 'state' => 'Different'], $diff['config_ignore.settings']);
@@ -94,7 +95,7 @@ class ConfigWithTranslationTest extends BrowserTestBase {
     $this->assertExportedValue('user.settings', 'anonymous', 'Visitor');
     // Check that the main user.role.anonymous.yml file was not overridden.
     $this->assertExportedValue('user.role.anonymous', 'label', 'Anonymous user');
-    // Check that the translated override has been created.
+    // Check that the translated version was not overridden.
     $this->assertExportedValue('user.role.anonymous', 'label', 'Utilizator anonim', 'ro');
   }
 
@@ -122,7 +123,7 @@ class ConfigWithTranslationTest extends BrowserTestBase {
     $this->assertSame('Visitor', $this->config('user.settings')->get('anonymous'));
     // Check that user.role.anonymous has been preserved.
     $this->assertSame('Anonymous user', $this->config('user.role.anonymous')->get('label'));
-    // Check that also the user.role.anonymous translation has been preserved.
+    // Check that the user.role.anonymous translation has been also preserved.
     $language_manager = \Drupal::languageManager();
     $original_language = $language_manager->getConfigOverrideLanguage();
     /** @var \Drupal\language\Config\LanguageConfigOverride $translated */
@@ -165,7 +166,7 @@ class ConfigWithTranslationTest extends BrowserTestBase {
    * @param string $config_name
    *   The config name.
    * @param string $key
-   *   The config key to be translated.  It only supports top level keys.
+   *   The config key to be translated. It only supports top level keys.
    * @param string $value
    *   The translated value.
    * @param string $langcode

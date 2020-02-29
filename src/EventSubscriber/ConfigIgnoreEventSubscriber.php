@@ -67,10 +67,6 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    if (Settings::get('config_ignore_deactivate')) {
-      return [];
-    }
-
     return [
       ConfigEvents::STORAGE_TRANSFORM_IMPORT => ['onImportTransform'],
       ConfigEvents::STORAGE_TRANSFORM_EXPORT => ['onExportTransform'],
@@ -84,7 +80,9 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   The config storage transform event.
    */
   public function onImportTransform(StorageTransformEvent $event) {
-    $this->transformStorage($event->getStorage(), $this->activeStorage);
+    if (!Settings::get('config_ignore_deactivate')) {
+      $this->transformStorage($event->getStorage(), $this->activeStorage);
+    }
   }
 
   /**
@@ -94,7 +92,9 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   The config storage transform event.
    */
   public function onExportTransform(StorageTransformEvent $event) {
-    $this->transformStorage($event->getStorage(), $this->syncStorage);
+    if (!Settings::get('config_ignore_deactivate')) {
+      $this->transformStorage($event->getStorage(), $this->syncStorage);
+    }
   }
 
   /**
