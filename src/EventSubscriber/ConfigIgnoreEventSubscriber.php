@@ -100,31 +100,31 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
   /**
    * Makes the import or export storages aware about ignored configs.
    *
-   * @param \Drupal\Core\Config\StorageInterface $source_storage
+   * @param \Drupal\Core\Config\StorageInterface $transformation_storage
    *   The import or the export storage.
    * @param \Drupal\Core\Config\StorageInterface $destination_storage
    *   The active storage on import. The sync storage on export.
    */
-  protected function transformStorage(StorageInterface $source_storage, StorageInterface $destination_storage) {
+  protected function transformStorage(StorageInterface $transformation_storage, StorageInterface $destination_storage) {
     $ignored_configs = $this->getIgnoredConfigs();
 
-    $collection_names = $source_storage->getAllCollectionNames();
+    $collection_names = $transformation_storage->getAllCollectionNames();
     array_unshift($collection_names, StorageInterface::DEFAULT_COLLECTION);
 
-    foreach ($ignored_configs as $config_name => $keys) {
-      foreach ($collection_names as $collection_name) {
-        $destination_storage = $collection_name === StorageInterface::DEFAULT_COLLECTION ? $destination_storage : $destination_storage->createCollection($collection_name);
-        $source_storage = $collection_name === StorageInterface::DEFAULT_COLLECTION ? $source_storage : $source_storage->createCollection($collection_name);
+    foreach ($collection_names as $collection_name) {
+      $destination_storage = $destination_storage->createCollection($collection_name);
+      $transformation_storage = $transformation_storage->createCollection($collection_name);
 
+      foreach ($ignored_configs as $config_name => $keys) {
         if ($destination_storage->exists($config_name)) {
           // The entire config is ignored.
           if ($keys === NULL) {
-            $source_storage->write($config_name, $destination_storage->read($config_name));
+            $transformation_storage->write($config_name, $destination_storage->read($config_name));
           }
           // Only some keys are ignored.
           else {
             $destination_data = $destination_storage->read($config_name);
-            $source_data = $source_storage->read($config_name);
+            $source_data = $transformation_storage->read($config_name);
             foreach ($keys as $key) {
               if (NestedArray::keyExists($destination_data, $key)) {
                 $value = NestedArray::getValue($destination_data, $key);
@@ -134,22 +134,22 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
                 NestedArray::unsetValue($source_data, $key);
               }
             }
-            $source_storage->write($config_name, $source_data);
+            $transformation_storage->write($config_name, $source_data);
           }
         }
         // The config doesn't exist in the source storage.
         else {
           // The entire config is ignored.
           if ($keys === NULL) {
-            $source_storage->delete($config_name);
+            $transformation_storage->delete($config_name);
           }
           // Only some keys are ignored.
           else {
-            $source_data = $source_storage->read($config_name);
+            $source_data = $transformation_storage->read($config_name);
             foreach ($keys as $key) {
               NestedArray::unsetValue($import_data, $key);
             }
-            $source_storage->write($config_name, $import_data);
+            $transformation_storage->write($config_name, $import_data);
           }
         }
       }
