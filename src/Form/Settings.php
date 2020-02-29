@@ -61,17 +61,17 @@ Examples: <ul>
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $values = $form_state->getValues();
     $config_ignore_settings = $this->config('config_ignore.settings');
-    $config_ignore_settings_array = preg_split("/[\r\n]+/", $values['ignored_config_entities']);
-    $config_ignore_settings_array = array_filter($config_ignore_settings_array);
-    $config_ignore_settings_array = array_values($config_ignore_settings_array);
+    // Normalize the text to Unix line endings.
+    $ignored_config_entities = str_replace("\r", "\n", $form_state->getValue('ignored_config_entities'));
+    $config_ignore_settings_array = array_values(
+      array_filter(
+        array_map('trim', explode("\n", $ignored_config_entities))
+      )
+    );
     $config_ignore_settings->set('ignored_config_entities', $config_ignore_settings_array);
     $config_ignore_settings->save();
     parent::submitForm($form, $form_state);
-
-    // Clear the config_filter plugin cache.
-    \Drupal::service('plugin.manager.config_filter')->clearCachedDefinitions();
   }
 
 }
