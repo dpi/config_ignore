@@ -106,7 +106,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   The active storage on import. The sync storage on export.
    */
   protected function transformStorage(StorageInterface $transformation_storage, StorageInterface $destination_storage) {
-    $ignored_configs = $this->getIgnoredConfigs();
+    $ignored_configs = $this->getIgnoredConfigs($transformation_storage);
 
     $collection_names = $transformation_storage->getAllCollectionNames();
     array_unshift($collection_names, StorageInterface::DEFAULT_COLLECTION);
@@ -147,9 +147,9 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
           else {
             $source_data = $transformation_storage->read($config_name);
             foreach ($keys as $key) {
-              NestedArray::unsetValue($import_data, $key);
+              NestedArray::unsetValue($source_data, $key);
             }
-            $transformation_storage->write($config_name, $import_data);
+            $transformation_storage->write($config_name, $source_data);
           }
         }
       }
@@ -158,6 +158,9 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
 
   /**
    * Returns the list of all ignored configs by expanding the wildcards.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $transformation_storage
+   *   The transformation config storage.
    *
    * @return array
    *   An associative array keyed by config name and having the values either
@@ -173,7 +176,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   ]
    *   @endcode
    */
-  protected function getIgnoredConfigs() {
+  protected function getIgnoredConfigs(StorageInterface $transformation_storage) {
     /** @var string[] $ignored_configs_patterns */
     $ignored_configs_patterns = $this->configFactory->get('config_ignore.settings')->get('ignored_config_entities');
     $this->moduleHandler->invokeAll('config_ignore_settings_alter', [&$ignored_configs_patterns]);
@@ -191,7 +194,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
     }
 
     $ignored_configs = [];
-    foreach ($this->configFactory->listAll() as $config_name) {
+    foreach ($transformation_storage->listAll() as $config_name) {
       foreach ($ignored_configs_patterns as $ignored_config_pattern) {
         if (strpos($ignored_config_pattern, ':') !== FALSE) {
           // Some patterns are defining also a key.

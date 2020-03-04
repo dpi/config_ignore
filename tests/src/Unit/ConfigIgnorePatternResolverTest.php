@@ -162,7 +162,9 @@ class ConfigIgnorePatternResolverTest extends UnitTestCase {
 
     $configFactory = $this->prophesize(ConfigFactoryInterface::class);
     $configFactory->get('config_ignore.settings')->willReturn($configIgnoreSettings->reveal());
-    $configFactory->listAll()->willReturn($all_configs);
+
+    $transformation_storage = $this->prophesize(StorageInterface::class);
+    $transformation_storage->listAll()->willReturn($all_configs);
 
     $subscriber = new ConfigIgnoreEventSubscriber(
       $configFactory->reveal(),
@@ -176,7 +178,7 @@ class ConfigIgnorePatternResolverTest extends UnitTestCase {
     $getIgnoredConfigsMethod = $class->getMethod('getIgnoredConfigs');
     $getIgnoredConfigsMethod->setAccessible(TRUE);
 
-    return $getIgnoredConfigsMethod->invokeArgs($subscriber, []);
+    return $getIgnoredConfigsMethod->invokeArgs($subscriber, [$transformation_storage->reveal()]);
   }
 
 }
