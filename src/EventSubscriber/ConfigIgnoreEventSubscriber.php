@@ -106,7 +106,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   The active storage on import. The sync storage on export.
    */
   protected function transformStorage(StorageInterface $transformation_storage, StorageInterface $destination_storage) {
-    $ignored_configs = $this->getIgnoredConfigs($transformation_storage);
+    $ignored_configs = $this->getIgnoredConfigs($transformation_storage, $destination_storage);
 
     $collection_names = $transformation_storage->getAllCollectionNames();
     array_unshift($collection_names, StorageInterface::DEFAULT_COLLECTION);
@@ -161,6 +161,8 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\Config\StorageInterface $transformation_storage
    *   The transformation config storage.
+   * @param \Drupal\Core\Config\StorageInterface $destination_storage
+   *   The destination config storage.
    *
    * @return array
    *   An associative array keyed by config name and having the values either
@@ -176,7 +178,8 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   ]
    *   @endcode
    */
-  protected function getIgnoredConfigs(StorageInterface $transformation_storage) {
+  protected function getIgnoredConfigs(StorageInterface $transformation_storage, StorageInterface $destination_storage) {
+    $config_list = array_unique(array_merge($transformation_storage->listAll(), $destination_storage->listAll()));
     /** @var string[] $ignored_configs_patterns */
     $ignored_configs_patterns = $this->configFactory->get('config_ignore.settings')->get('ignored_config_entities');
     $this->moduleHandler->invokeAll('config_ignore_settings_alter', [&$ignored_configs_patterns]);
@@ -194,7 +197,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
     }
 
     $ignored_configs = [];
-    foreach ($transformation_storage->listAll() as $config_name) {
+    foreach ($config_list as $config_name) {
       foreach ($ignored_configs_patterns as $ignored_config_pattern) {
         if (strpos($ignored_config_pattern, ':') !== FALSE) {
           // Some patterns are defining also a key.
