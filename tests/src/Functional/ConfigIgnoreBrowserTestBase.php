@@ -36,8 +36,7 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
       $this->container->get('config.import_transformer')->transform(
         $this->container->get('config.storage.sync')
       ),
-      $this->container->get('config.storage'),
-      $this->container->get('config.manager')
+      $this->container->get('config.storage')
     );
 
     $config_importer = new ConfigImporter(
@@ -49,7 +48,8 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
       $this->container->get('module_handler'),
       $this->container->get('module_installer'),
       $this->container->get('theme_handler'),
-      $this->container->get('string_translation')
+      $this->container->get('string_translation'),
+      $this->container->get('extension.list.module')
     );
 
     $config_importer->reset()->import();

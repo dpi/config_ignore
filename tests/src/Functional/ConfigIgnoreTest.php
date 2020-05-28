@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\config_ignore\Functional;
 
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Site\Settings;
+
 /**
  * Test functionality of config_ignore module.
  *
@@ -14,6 +17,7 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
    */
   protected static $modules = [
     'config',
+    'config_test',
   ];
 
   /**
@@ -157,6 +161,39 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
     $this->assertEquals('Changed title', $this->config('system.site')->get('name'));
     $this->assertEquals('Test slogan', $this->config('system.site')->get('slogan'));
     $this->assertEquals('/new-ignore', $this->config('system.site')->get('page.front'));
+  }
+
+  /**
+   * Test syncing missing config entity.
+   *
+   * This test covers importing config that is ignored but doesn't exist.
+   */
+  public function testImportMissingConfig() {
+
+    // Ignore a config entity.
+    $this->config('config_ignore.settings')->set('ignored_config_entities', ['config_test.*'])->save();
+
+    // Export the current state.
+    $this->doExport();
+
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $config_test_storage */
+    $config_test_storage = $this->container->get('entity_type.manager')->getStorage('config_test');
+
+    /** @var \Drupal\config_test\ConfigTestInterface $entity */
+    $entity = $config_test_storage->create([
+      'id' => 'foo',
+      'label' => 'Foo',
+    ]);
+
+    $config_test_storage->save($entity);
+    $loaded_entity = $loaded_entity = $config_test_storage->load($entity->id());
+    $this->assertNotNull($loaded_entity);
+
+    $this->doImport();
+
+    $loaded_entity = $config_test_storage->load($entity->id());
+    $this->assertNotNull($loaded_entity);
+
   }
 
 }
