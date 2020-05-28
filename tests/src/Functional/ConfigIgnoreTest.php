@@ -2,9 +2,6 @@
 
 namespace Drupal\Tests\config_ignore\Functional;
 
-use Drupal\Core\Config\FileStorage;
-use Drupal\Core\Site\Settings;
-
 /**
  * Test functionality of config_ignore module.
  *

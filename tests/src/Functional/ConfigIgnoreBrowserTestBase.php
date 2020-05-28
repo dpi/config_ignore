@@ -59,14 +59,15 @@ abstract class ConfigIgnoreBrowserTestBase extends BrowserTestBase {
    * Perform a config export to sync. folder.
    */
   public function doExport() {
-    // Setup a config sync. dir with a, more or less,  know set of config
+    // Setup a config sync. dir with a, more or less,  known set of config
     // entities. This is a full blown export of yaml files, written to the disk.
-    $destination_storage = new FileStorage(Settings::get('config_sync_directory'));
-    /** @var \Drupal\Core\Config\CachedStorage $source_storage */
-    $source_storage = \Drupal::service('config.storage');
-    foreach ($source_storage->listAll() as $name) {
-      $destination_storage->write($name, $source_storage->read($name));
-    }
+    /** @var \Drupal\Core\Config\StorageInterface $destination_storage */
+    $destination_storage = $this->container->get('config.storage.sync');
+    // Importantly export from the export storage so that the export
+    // transformation is triggered.
+    /** @var \Drupal\Core\Config\StorageInterface $source_storage */
+    $source_storage = $this->container->get('config.storage.export');
+    $this->copyConfig($source_storage, $destination_storage);
   }
 
 }
