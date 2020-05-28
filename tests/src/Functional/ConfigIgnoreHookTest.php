@@ -13,6 +13,7 @@ class ConfigIgnoreHookTest extends ConfigIgnoreBrowserTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
+    'config',
     'config_ignore_hook_test',
   ];
 
@@ -33,6 +34,45 @@ class ConfigIgnoreHookTest extends ConfigIgnoreBrowserTestBase {
     // config.
     $this->assertEquals('Changed title', $this->config('system.site')->get('name'));
 
+  }
+
+  /**
+   * Test alter hook values are cached unless invalidated.
+   *
+   * Its important import/export is called directly, if called by a browser then
+   * static cache will not be present.
+   *
+   * @covers \Drupal\config_ignore\EventSubscriber\ConfigIgnoreEventSubscriber::getPatterns
+   * @covers \Drupal\config_ignore\EventSubscriber\ConfigIgnoreEventSubscriber::invalidateTags
+   */
+  public function testAlterHookStaticCache() {
+    // Never called.
+    $this->assertNull($this->getAlterCallCount());
+
+    // Initial call caches.
+    $this->doExport();
+    $this->assertEquals(1, $this->getAlterCallCount());
+
+    // Subsequent calls read from cache.
+    $this->doExport();
+    $this->assertEquals(1, $this->getAlterCallCount());
+
+    // Writing a new value to our config triggers cache tag invalidation.
+    // This value is inconsequential.
+    $this->config('config_ignore.settings')->set('ignored_config_entities', [''])->save();
+
+    $this->doExport();
+    $this->assertEquals(2, $this->getAlterCallCount());
+  }
+
+  /**
+   * Get call count of alter hook.
+   *
+   * @return int|null
+   *   Call count, or NULL if not called.
+   */
+  protected function getAlterCallCount() {
+    return \Drupal::state()->get('hook_config_ignore_settings_alter__call_count');
   }
 
 }

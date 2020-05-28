@@ -3,6 +3,7 @@
 namespace Drupal\config_ignore\EventSubscriber;
 
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Config\ConfigEvents;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\StorageInterface;
@@ -14,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Makes the import/export aware of ignored configs.
  */
-class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
+class ConfigIgnoreEventSubscriber implements EventSubscriberInterface, CacheTagsInvalidatorInterface {
 
   /**
    * The config factory service.
@@ -45,6 +46,17 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
   protected $syncStorage;
 
   /**
+   * Statically cached ignored config patterns and exceptions.
+   *
+   * Null if not cached, or a keyed array containing:
+   * - 0: (string[]) Array of config ignore patterns
+   * - 1: (string[]) Exceptions to config ignore patterns.
+   *
+   * @var array|null
+   */
+  protected $ignoredConfig = NULL;
+
+  /**
    * Constructs a new event subscriber instance.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -71,6 +83,16 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
       ConfigEvents::STORAGE_TRANSFORM_IMPORT => ['onImportTransform'],
       ConfigEvents::STORAGE_TRANSFORM_EXPORT => ['onExportTransform'],
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function invalidateTags(array $tags) {
+    // Invalidate static cache if config changes.
+    if (in_array('config:config_ignore.settings', $tags, TRUE)) {
+      $this->ignoredConfig = NULL;
+    }
   }
 
   /**
@@ -106,7 +128,7 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   The active storage on import. The sync storage on export.
    */
   protected function transformStorage(StorageInterface $transformation_storage, StorageInterface $destination_storage) {
-    $ignored_configs = $this->getIgnoredConfigs($transformation_storage);
+    $ignored_configs = $this->getIgnoredConfigs($transformation_storage) + $this->getIgnoredConfigs($destination_storage);
 
     $collection_names = $transformation_storage->getAllCollectionNames();
     array_unshift($collection_names, StorageInterface::DEFAULT_COLLECTION);
@@ -159,8 +181,8 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
   /**
    * Returns the list of all ignored configs by expanding the wildcards.
    *
-   * @param \Drupal\Core\Config\StorageInterface $transformation_storage
-   *   The transformation config storage.
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   A config storage.
    *
    * @return array
    *   An associative array keyed by config name and having the values either
@@ -176,26 +198,12 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
    *   ]
    *   @endcode
    */
-  protected function getIgnoredConfigs(StorageInterface $transformation_storage) {
-    /** @var string[] $ignored_configs_patterns */
-    $ignored_configs_patterns = $this->configFactory->get('config_ignore.settings')->get('ignored_config_entities');
-    $this->moduleHandler->invokeAll('config_ignore_settings_alter', [&$ignored_configs_patterns]);
-
-    // Builds ignored configs exceptions and remove them from the pattern list.
-    $exceptions = [];
-    foreach ($ignored_configs_patterns as $delta => $ignored_config_pattern) {
-      if (strpos($ignored_config_pattern, '~') === 0) {
-        if (strpos($ignored_config_pattern, '*') !== FALSE) {
-          throw new \LogicException("A config ignore pattern entry cannot contain both, '~' and '*'.");
-        }
-        $exceptions[] = substr($ignored_config_pattern, 1);
-        unset($ignored_configs_patterns[$delta]);
-      }
-    }
+  protected function getIgnoredConfigs(StorageInterface $storage) {
+    [$patterns, $exceptions] = $this->getRules();
 
     $ignored_configs = [];
-    foreach ($transformation_storage->listAll() as $config_name) {
-      foreach ($ignored_configs_patterns as $ignored_config_pattern) {
+    foreach ($storage->listAll() as $config_name) {
+      foreach ($patterns as $ignored_config_pattern) {
         if (strpos($ignored_config_pattern, ':') !== FALSE) {
           // Some patterns are defining also a key.
           [$config_name_pattern, $key] = explode(':', $ignored_config_pattern, 2);
@@ -242,6 +250,37 @@ class ConfigIgnoreEventSubscriber implements EventSubscriberInterface {
     $pattern = '/^' . preg_quote($pattern, '/') . '$/';
     $pattern = str_replace('\*', '.*', $pattern);
     return (bool) preg_match($pattern, $string);
+  }
+
+  /**
+   * Get config ignore rules.
+   *
+   * @return array
+   *   A keyed array containing:
+   *   - 0: (string[]) Array of config ignore patterns
+   *   - 1: (string[]) Exceptions to config ignore patterns.
+   */
+  protected function getRules() {
+    if (isset($this->ignoredConfig)) {
+      return $this->ignoredConfig;
+    }
+
+    $ignored_configs_patterns = $this->configFactory->get('config_ignore.settings')->get('ignored_config_entities');
+    $this->moduleHandler->invokeAll('config_ignore_settings_alter', [&$ignored_configs_patterns]);
+
+    // Builds ignored configs exceptions and remove them from the pattern list.
+    $exceptions = [];
+    foreach ($ignored_configs_patterns as $delta => $ignored_config_pattern) {
+      if (strpos($ignored_config_pattern, '~') === 0) {
+        if (strpos($ignored_config_pattern, '*') !== FALSE) {
+          throw new \LogicException("A config ignore pattern entry cannot contain both, '~' and '*'.");
+        }
+        $exceptions[] = substr($ignored_config_pattern, 1);
+        unset($ignored_configs_patterns[$delta]);
+      }
+    }
+
+    return $this->ignoredConfig = [$ignored_configs_patterns, $exceptions];
   }
 
 }

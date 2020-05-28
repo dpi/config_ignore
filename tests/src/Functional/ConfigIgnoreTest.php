@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\config_ignore\Functional;
 
+use Drupal\config_test\ConfigTestInterface;
+
 /**
  * Test functionality of config_ignore module.
  *
@@ -161,19 +163,16 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
   }
 
   /**
-   * Test syncing missing config entity.
-   *
-   * This test covers importing config that is ignored but doesn't exist.
+   * Tests config in active storage is not deleted if it should be ignored.
    */
   public function testImportMissingConfig() {
-
     // Ignore a config entity.
     $this->config('config_ignore.settings')->set('ignored_config_entities', ['config_test.*'])->save();
 
     // Export the current state.
     $this->doExport();
 
-    /** @var \Drupal\Core\Entity\EntityStorageInterface $config_test_storage */
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityStorageInterface $config_test_storage */
     $config_test_storage = $this->container->get('entity_type.manager')->getStorage('config_test');
 
     /** @var \Drupal\config_test\ConfigTestInterface $entity */
@@ -181,16 +180,12 @@ class ConfigIgnoreTest extends ConfigIgnoreBrowserTestBase {
       'id' => 'foo',
       'label' => 'Foo',
     ]);
-
-    $config_test_storage->save($entity);
-    $loaded_entity = $loaded_entity = $config_test_storage->load($entity->id());
-    $this->assertNotNull($loaded_entity);
+    $entity->save();
 
     $this->doImport();
 
     $loaded_entity = $config_test_storage->load($entity->id());
-    $this->assertNotNull($loaded_entity);
-
+    $this->assertInstanceOf(ConfigTestInterface::class, $loaded_entity);
   }
 
 }
